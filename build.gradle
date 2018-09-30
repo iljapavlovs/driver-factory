@@ -1,14 +1,29 @@
-plugins {
-    id 'java'
+//https://reflectoring.io/guide-publishing-to-bintray-with-gradle/#set-up-your-buildgradle
+buildscript {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        jcenter()
+    }
 }
 
+plugins {
+    id "com.jfrog.bintray" version "1.8.1"
+    id "maven-publish"
+    id "java"
+}
+
+
 group 'io.iljapavlovs'
-version '1.0-SNAPSHOT'
+version = '1.0.0'
 
 sourceCompatibility = 1.8
 
+
 repositories {
+    mavenLocal()
     mavenCentral()
+    jcenter()
 }
 
 dependencies {
@@ -17,3 +32,110 @@ dependencies {
     compile("io.github.bonigarcia:webdrivermanager:3.0.0")
 
 }
+
+
+
+//Build Sources and Javadoc Artifacts
+//When publishing an open source projects, you will want to publish a JAR containing the sources and another JAR containing the javadoc together with your normal JAR.
+// This helps developers using your project since IDEs support downloading those JARs and displaying the sources directly in the editor.
+//Also, providing sources and javadoc is a requirement for publishing on Maven Central, so we can as well do it now.
+
+task sourcesJar(type: Jar, dependsOn: classes) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+//by default, the javadoc task will fail on things like empty paragraphs (</p>) which can be very annoying
+javadoc.failOnError = false
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
+artifacts {
+    archives sourcesJar
+    archives javadocJar
+}
+
+//Define what to publish
+
+//provide some metadata that is put into the pom.xml when publishing
+def pomConfig = {
+    licenses {
+        license {
+            name "The Apache Software License, Version 2.0"
+            url "http://www.apache.org/licenses/LICENSE-2.0.txt"
+            distribution "repo"
+        }
+    }
+    developers {
+        developer {
+            id "iljapavlovs"
+            name "Ilja Pavlovs"
+            email "ilja.pavlovs@gmail.com"
+        }
+    }
+
+    scm {
+        url "https://github.com/iljapavlovs/driver-factory"
+    }
+}
+
+
+// provided by the maven-publish plugin which is applied
+publishing {
+    publications {
+        mavenPublication(MavenPublication) {
+            from components.java
+            artifact sourcesJar {
+                classifier "sources"
+            }
+            artifact javadocJar {
+                classifier "javadoc"
+            }
+            groupId 'io.iljapavlovs'
+            artifactId 'driver-factory'
+            version '1.0.0'
+            pom.withXml {
+                def root = asNode()
+                root.appendNode('description', 'Selenium WebDriver factory and helper methods')
+                root.appendNode('name', 'driver-factory')
+                root.appendNode('url', 'https://github.com/iljapavlovs/driver-factory')
+                root.children().last() + pomConfig
+            }
+        }
+    }
+}
+
+//Provide Bintray-specific Information
+
+bintray {
+    user = System.getProperty('bintray.user')
+    key = System.getProperty('bintray.key')
+    publications = ['mavenPublication']
+
+
+//  After executing `./gradlew bintrayUpload -Dbintray.user=<YOUR_USER_NAME> -Dbintray.key=<YOUR_API_KEY>`  The files will be uploaded to Bintray, but by default they have not been published to the Maven repository yet.
+// You can do this manually for each new version on the Bintray site.
+//OR
+//    publish the files automatically after uploading
+    publish = true
+
+//    In the pkg closure, we define some additional information for the Bintray “package”.
+// A package in Bintray is actually nothing more than a “folder” within your repository which you can use to structure your artifacts.
+// For example, if you have a multi-module build and want to publish a couple of them into the same repository, you could create a package for each of them.
+    pkg {
+        repo = 'driver-factory'
+        name = 'driver-factory'
+        licenses = ['Apache-2.0']
+        vcsUrl = 'https://github.com/iljapavlovs/driver-factory'
+        version {
+            name = '1.0.0'
+            desc = '1.0.0'
+            released  = new Date()
+        }
+    }
+
+}
+
+

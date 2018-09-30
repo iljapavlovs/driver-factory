@@ -1,11 +1,39 @@
+#With the language property, we tell Travis that it’s a Java project.
 language: java
+#install: true tells Travis that we want to take care of running the Gradle build ourselves (otherwise Travis runs gradlew assemble before each build stage).
 install: true
 
 sudo: false
+#We tell Travis to install the oracle-java8-installer that in turn takes care of installing the most current Java 8 JDK.
 addons:
   apt:
     packages:
     - oracle-java8-installer
-
+#makes the gradlew file executable so that Travis can run it.
 before_install:
 - chmod +x gradlew
+
+stages:
+#  The build stage is going to run the gradle build and check if everything compiles and all tests are running.
+- name: build
+#  The snapshot stage is responsible for publishing a snapshot release and thus should only run on the master branch.
+#- name: snapshot
+#  if: branch = master
+
+#The release stage is responsible for publishing a stable release and thus should only run on the release branch.
+- name: release
+  if: branch = master
+
+
+jobs:
+  include:
+  - stage: build
+    script: ./gradlew build
+
+# artifactoryPublish task that takes care of publishing the current build as a snapshot to oss.jfrog.org.
+#  - stage: snapshot
+#    script: ./gradlew artifactoryPublish -x test -Dsnapshot=true -Dbintray.user=$BINTRAY_USER -Dbintray.key=$BINTRAY_KEY -Dbuild.number=$TRAVIS_BUILD_NUMBER
+#
+#    bintrayUpload task that takes care of publishing a stable release to Bintray
+  - stage: release
+    script: ./gradlew bintrayUpload -x test -Dbintray.user=$BINTRAY_USER -Dbintray.key=$BINTRAY_KEY -Dbuild.number=$TRAVIS_BUILD_NUMBER
