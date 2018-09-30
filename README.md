@@ -15,3 +15,9 @@ dependencies {
 }
 
 ```
+
+## Resources
+
+* [Publishing Open Source Snapshots with Gradle](https://reflectoring.io/publish-snapshots-with-gradle/)
+* [Publishing Open Source Releases with Gradle](https://reflectoring.io/guide-publishing-to-bintray-with-gradle/)
+* [A Fully Automated Open Source Release Chain with Gradle and Travis CI](https://reflectoring.io/fully-automated-open-source-release-chain/)
