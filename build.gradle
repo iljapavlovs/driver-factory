@@ -121,6 +121,13 @@ bintray {
 //    publish the files automatically after uploading
     publish = true
 
+
+
+//    Override artifact if artifact with the same version exists
+    override = true
+
+
+
 //    In the pkg closure, we define some additional information for the Bintray “package”.
 // A package in Bintray is actually nothing more than a “folder” within your repository which you can use to structure your artifacts.
 // For example, if you have a multi-module build and want to publish a couple of them into the same repository, you could create a package for each of them.
